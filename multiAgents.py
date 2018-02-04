@@ -157,7 +157,68 @@ class MinimaxAgent(MultiAgentSearchAgent):
         Returns the total number of agents in the game
     """
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+
+    actions = gameState.getLegalActions(0)
+    returnAction = 'Stop'
+    returnValue = -999999
+
+    for action in actions:
+      if action != 'Stop':
+        successorState = gameState.generateSuccessor(0, action)
+        minimaxValue = self.minValue(successorState, self.treeDepth, 1)
+        print 'minimaxValue: ', minimaxValue
+        if minimaxValue > returnValue:
+          returnValue = minimaxValue
+          returnAction = action
+
+    return returnAction
+    # util.raiseNotDefined()
+
+  def minValue(self, currentState, depth, AgentIndex):
+    numAgents = currentState.getNumAgents()
+    returnValue = -99999999
+    # nextAgentIdex is 0 (Pac-Man) if there are no more ghosts. Else, it's the next ghost
+    nextAgentIndex = 0 if AgentIndex + 1 >= numAgents else AgentIndex + 1
+    actions = currentState.getLegalActions(AgentIndex)
+
+    if depth == 0 or len(actions) == 0:
+      return self.evaluationFunction(currentState)
+
+    for action in actions:
+      if action != 'Stop':
+        successorState = currentState.generateSuccessor(AgentIndex, action)
+        if nextAgentIndex != 0:
+          minimaxValue = self.minValue(currentState, depth, nextAgentIndex)
+        else:
+          minimaxValue = self.maxValue(successorState, depth-1, nextAgentIndex)
+
+        if minimaxValue > returnValue:
+          returnValue = minimaxValue
+
+    return returnValue
+
+  def maxValue(self, currentState, depth, AgentIndex):
+    numAgents = currentState.getNumAgents()
+    returnValue = 99999999
+    # nextAgentIdex is 0 (Pac-Man) if there are no more ghosts. Else, it's the next ghost
+    nextAgentIndex = 0 if AgentIndex + 1 >= numAgents else AgentIndex + 1
+    actions = currentState.getLegalActions(AgentIndex)
+
+    if depth == 0 or len(actions) == 0:
+      return self.evaluationFunction(currentState)
+
+    for action in actions:
+      if action != 'Stop':
+        successorState = currentState.generateSuccessor(AgentIndex, action)
+        if nextAgentIndex != 0:
+          minimaxValue = self.minValue(currentState, depth, nextAgentIndex)
+        else:
+          minimaxValue = self.maxValue(successorState, depth-1, nextAgentIndex)
+
+        if minimaxValue < returnValue:
+          returnValue = minimaxValue
+
+    return returnValue
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
   """
