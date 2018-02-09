@@ -87,8 +87,8 @@ class ReflexAgent(Agent):
 
     distanceToGhosts = manhattanDistance((newx, newy), ghostPositions[0])
 
-    print 'distance to food: ', distanceToFood
-    print 'distance to Ghost: ', distanceToGhosts
+    # print 'distance to food: ', distanceToFood
+    # print 'distance to Ghost: ', distanceToGhosts
 
     score = 1/(distanceToFood+0.001) + 100*distanceToGhosts
     # if oldFood[newx][newy]:
@@ -157,17 +157,20 @@ class MinimaxAgent(MultiAgentSearchAgent):
         Returns the total number of agents in the game
     """
     "*** YOUR CODE HERE ***"
-
+    # Pac-Man actions
     actions = gameState.getLegalActions(0)
-    returnAction = 'Stop'
+    returnAction = None
     returnValue = -999999
 
     for action in actions:
       if action != 'Stop':
         successorState = gameState.generateSuccessor(0, action)
+        # find the min value of the first Agent 
         minimaxValue = self.minValue(successorState, self.treeDepth, 1)
-        print 'minimaxValue: ', minimaxValue
+       
+        # we need the max value that corresponds to the max action
         if minimaxValue > returnValue:
+          print 'minimaxValue: ', minimaxValue
           returnValue = minimaxValue
           returnAction = action
 
@@ -175,6 +178,32 @@ class MinimaxAgent(MultiAgentSearchAgent):
     # util.raiseNotDefined()
 
   def minValue(self, currentState, depth, AgentIndex):
+    numAgents = currentState.getNumAgents()
+    returnValue = 99999999
+    # nextAgentIdex is 0 (Pac-Man) if there are no more ghosts. Else, it's the next ghost
+    nextAgentIndex = 0 if AgentIndex + 1 >= numAgents else AgentIndex + 1
+    actions = currentState.getLegalActions(AgentIndex)
+
+    # if we hit a leaf node, use the evaluation function
+    if depth == 0 or len(actions) == 0:
+      return self.evaluationFunction(currentState)
+
+    for action in actions:
+      if action != 'Stop':
+        successorState = currentState.generateSuccessor(AgentIndex, action)
+        # if there is another Ghost, find its min Value. Else continue to Pac-Man's
+        # next move
+        if nextAgentIndex != 0:
+          minimaxValue = self.minValue(currentState, depth, nextAgentIndex)
+        else:
+          minimaxValue = self.maxValue(successorState, depth-1, nextAgentIndex)
+
+        if minimaxValue < returnValue:
+          returnValue = minimaxValue
+
+    return returnValue
+
+  def maxValue(self, currentState, depth, AgentIndex):
     numAgents = currentState.getNumAgents()
     returnValue = -99999999
     # nextAgentIdex is 0 (Pac-Man) if there are no more ghosts. Else, it's the next ghost
@@ -197,9 +226,70 @@ class MinimaxAgent(MultiAgentSearchAgent):
 
     return returnValue
 
-  def maxValue(self, currentState, depth, AgentIndex):
+class AlphaBetaAgent(MultiAgentSearchAgent):
+  """
+    Your minimax agent with alpha-beta pruning (question 3)
+  """
+
+  def getAction(self, gameState):
+    """
+      Returns the minimax action using self.treeDepth and self.evaluationFunction
+    """
+    "*** YOUR CODE HERE ***"
+    # Pac-Man actions
+    actions = gameState.getLegalActions(0)
+    returnAction = None
+    returnValue = -999999
+
+    for action in actions:
+      if action != 'Stop':
+        successorState = gameState.generateSuccessor(0, action)
+        # find the min value of the first Agent 
+        minimaxValue = self.minValue(successorState, self.treeDepth, 1, -999999, 999999)
+       
+        # we need the max value that corresponds to the max action
+        if minimaxValue > returnValue:
+          print 'minimaxValue: ', minimaxValue
+          returnValue = minimaxValue
+          returnAction = action
+
+    return returnAction
+    # util.raiseNotDefined()
+
+  def minValue(self, currentState, depth, AgentIndex, alpha, beta):
     numAgents = currentState.getNumAgents()
     returnValue = 99999999
+    # nextAgentIdex is 0 (Pac-Man) if there are no more ghosts. Else, it's the next ghost
+    nextAgentIndex = 0 if AgentIndex + 1 >= numAgents else AgentIndex + 1
+    actions = currentState.getLegalActions(AgentIndex)
+
+    # if we hit a leaf node, use the evaluation function
+    if depth == 0 or len(actions) == 0:
+      return self.evaluationFunction(currentState)
+
+    for action in actions:
+      if action != 'Stop':
+        successorState = currentState.generateSuccessor(AgentIndex, action)
+        # if there is another Ghost, find its min Value. Else continue to Pac-Man's
+        # next move
+        if nextAgentIndex != 0:
+          minimaxValue = self.minValue(currentState, depth, nextAgentIndex, alpha, beta)
+        else:
+          minimaxValue = self.maxValue(successorState, depth-1, nextAgentIndex, alpha, beta)
+
+        if minimaxValue < returnValue:
+          returnValue = minimaxValue
+
+        if returnValue <= alpha:
+          return returnValue
+
+        beta = min(beta, returnValue)
+
+    return returnValue
+
+  def maxValue(self, currentState, depth, AgentIndex, alpha, beta):
+    numAgents = currentState.getNumAgents()
+    returnValue = -99999999
     # nextAgentIdex is 0 (Pac-Man) if there are no more ghosts. Else, it's the next ghost
     nextAgentIndex = 0 if AgentIndex + 1 >= numAgents else AgentIndex + 1
     actions = currentState.getLegalActions(AgentIndex)
@@ -211,26 +301,18 @@ class MinimaxAgent(MultiAgentSearchAgent):
       if action != 'Stop':
         successorState = currentState.generateSuccessor(AgentIndex, action)
         if nextAgentIndex != 0:
-          minimaxValue = self.minValue(currentState, depth, nextAgentIndex)
+          minimaxValue = self.minValue(currentState, depth, nextAgentIndex, alpha, beta)
         else:
-          minimaxValue = self.maxValue(successorState, depth-1, nextAgentIndex)
+          minimaxValue = self.maxValue(successorState, depth-1, nextAgentIndex, alpha, beta)
 
-        if minimaxValue < returnValue:
+        if minimaxValue > returnValue:
           returnValue = minimaxValue
 
+        if returnValue >= beta:
+          return returnValue
+
+        alpha = max(alpha, returnValue)
     return returnValue
-
-class AlphaBetaAgent(MultiAgentSearchAgent):
-  """
-    Your minimax agent with alpha-beta pruning (question 3)
-  """
-
-  def getAction(self, gameState):
-    """
-      Returns the minimax action using self.treeDepth and self.evaluationFunction
-    """
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
   """
