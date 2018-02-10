@@ -327,7 +327,72 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
       legal moves.
     """
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    actions = gameState.getLegalActions(0)
+    returnAction = None
+    returnValue = -999999
+
+    for action in actions:
+      if action != 'Stop':
+        successorState = gameState.generateSuccessor(0, action)
+        # find the min value of the first Agent 
+        minimaxValue = self.expectiMax(successorState, self.treeDepth, 1)
+       
+        # we need the max value that corresponds to the max action
+        if minimaxValue > returnValue:
+          print 'minimaxValue: ', minimaxValue
+          returnValue = minimaxValue
+          returnAction = action
+
+    return returnAction
+    # util.raiseNotDefined()
+
+  def expectiMax(self, currentState, depth, AgentIndex):
+    numAgents = currentState.getNumAgents()
+    returnValue = 0
+    # nextAgentIdex is 0 (Pac-Man) if there are no more ghosts. Else, it's the next ghost
+    nextAgentIndex = 0 if AgentIndex + 1 >= numAgents else AgentIndex + 1
+    actions = currentState.getLegalActions(AgentIndex)
+
+    # if we hit a leaf node, use the evaluation function
+    if depth == 0 or len(actions) == 0:
+      return self.evaluationFunction(currentState)
+
+    for action in actions:
+      if action != 'Stop':
+        successorState = currentState.generateSuccessor(AgentIndex, action)
+        # if there is another Ghost, find its min Value. Else continue to Pac-Man's
+        # next move
+        if nextAgentIndex != 0:
+          expectiMaxValue = self.expectiMax(successorState, depth, nextAgentIndex)
+        else:
+          expectiMaxValue = self.maxValue(successorState, depth-1, nextAgentIndex)
+
+        returnValue += expectiMaxValue
+
+    return returnValue/len(actions)
+
+  def maxValue(self, currentState, depth, AgentIndex):
+    numAgents = currentState.getNumAgents()
+    returnValue = -99999999
+    # nextAgentIdex is 0 (Pac-Man) if there are no more ghosts. Else, it's the next ghost
+    nextAgentIndex = 0 if AgentIndex + 1 >= numAgents else AgentIndex + 1
+    actions = currentState.getLegalActions(AgentIndex)
+
+    if depth == 0 or len(actions) == 0:
+      return self.evaluationFunction(currentState)
+
+    for action in actions:
+      if action != 'Stop':
+        successorState = currentState.generateSuccessor(AgentIndex, action)
+        if nextAgentIndex != 0:
+          expectiMaxValue = self.expectiMax(successorState, depth, nextAgentIndex)
+        else:
+          expectiMaxValue = self.maxValue(successorState, depth-1, nextAgentIndex)
+
+        if expectiMaxValue > returnValue:
+          returnValue = expectiMaxValue
+
+    return returnValue
 
 def betterEvaluationFunction(currentGameState):
   """
