@@ -12,6 +12,7 @@ import random, util
 
 from game import Agent
 
+
 class ReflexAgent(Agent):
   """
     A reflex agent chooses an action at each choice point by examining
@@ -63,8 +64,11 @@ class ReflexAgent(Agent):
     # Useful information you can extract from a GameState (pacman.py)
     successorGameState = currentGameState.generatePacmanSuccessor(action)
     newPosition = successorGameState.getPacmanPosition()
-    oldFood = currentGameState.getFood()
+    oldPosition = currentGameState.getPacmanPosition()
+    oldFood = currentGameState.getFood().asList()
+    newFood = successorGameState.getFood().asList()
     newGhostStates = successorGameState.getGhostStates()
+    oldGhostStates = currentGameState.getGhostStates()
     newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
 
     "*** YOUR CODE HERE ***"
@@ -74,33 +78,60 @@ class ReflexAgent(Agent):
     # # print 'newGhostStates: ', newGhostStates
     # print 'newScaredTimes: ', newScaredTimes
     score = successorGameState.getScore()
-    newx = newPosition[0]
-    newy = newPosition[1]
-    ghostPositions = [s.getPosition() for s in newGhostStates]
-    distanceToFood = 10000
-    # distanceToGhosts = 0
+    newPacX = newPosition[0]
+    newPacY = newPosition[1]
+    oldPacX = oldPosition[0]
+    oldPacY = oldPosition[1]
+    newGhostPositions = [s.getPosition() for s in newGhostStates]
+    oldGhostPositions = [s.getPosition() for s in oldGhostStates]
+    newGhostX = newGhostPositions[0][0]
+    newGhostY = newGhostPositions[0][1]
+    oldGhostX = oldGhostPositions[0][0]
+    oldGhostY = oldGhostPositions[0][1]
+    oldDistanceToFood = 10000
+    newDistanceToFood = 10000
+    oldDistanceToGhost = 10000
+    newDistanceToGhost = 10000
+    oldFoodNum = currentGameState.getNumFood()
+    newFoodNum = successorGameState.getNumFood()
+    total = 0
+    for foodx, foody in oldFood:
+      d = util.manhattanDistance((oldPacX, oldPacY), (foodx, foody))
+      total += d
+    oldDistanceToFood = total/len(oldFood)
+    total = 0
+    for foodx, foody in oldFood:
+      d = util.manhattanDistance((newPacY, newPacY), (foodx, foody))
+      total += d
+    newDistanceToFood = total/len(oldFood)
 
-    for foodx, foody in oldFood.asList():
-      d = util.manhattanDistance((newx, newy), (foodx, foody))
-      if d < distanceToFood:
-        distanceToFood = d
+    oldDistanceToGhost = manhattanDistance((oldPacX,oldPacY), (oldGhostX, oldGhostY))
+    newDistanceToGhost = manhattanDistance((newPacX,newPacY), (newGhostX, newGhostY))
 
-    distanceToGhosts = manhattanDistance((newx, newy), ghostPositions[0])
+    PacManWillDie = (newPacX, newPacY) == (newGhostX, newGhostY)
 
-    # print 'distance to food: ', distanceToFood
-    # print 'distance to Ghost: ', distanceToGhosts
+    if PacManWillDie:
+      return -99999
 
-    score = 1/(distanceToFood+0.001) + 100*distanceToGhosts
-    # if oldFood[newx][newy]:
-    #   score = score * 1000000
+    if newFoodNum < oldFoodNum:
+      score += 99999
+    elif newDistanceToFood < oldDistanceToFood:
+      score += 20000
+    else:
+      score += -20000
+    
+
+    if action == 'Stop':
+      score += -2000
+
+    # if newDistanceToGhost > oldDistanceToGhost:
+    #   score = (score+1) * 100
     # else:
-    #   score = score * 1/1000
-
-    # if (newx, newy) in ghostPositions:
-    #   score = score * 1/1000000
+    #   score = score * 1/20
 
     return score
 
+   
 def scoreEvaluationFunction(currentGameState):
   """
     This default evaluation function just returns the score of the state.
