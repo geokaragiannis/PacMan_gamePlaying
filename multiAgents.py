@@ -370,7 +370,7 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
        
         # we need the max value that corresponds to the max action
         if minimaxValue > returnValue:
-          print 'minimaxValue: ', minimaxValue
+          # print 'minimaxValue: ', minimaxValue
           returnValue = minimaxValue
           returnAction = action
 
