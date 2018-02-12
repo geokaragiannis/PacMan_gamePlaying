@@ -433,7 +433,66 @@ def betterEvaluationFunction(currentGameState):
     DESCRIPTION: <write something here so we know what you did>
   """
   "*** YOUR CODE HERE ***"
-  util.raiseNotDefined()
+      # Useful information you can extract from a GameState (pacman.py)
+  position = currentGameState.getPacmanPosition()
+  food = currentGameState.getFood().asList()
+  ghostStates = currentGameState.getGhostStates()
+  scaredTimes = [ghostState.scaredTimer for ghostState in ghostStates]
+  ghostPositions = currentGameState.getGhostPositions()
+  foodNum = currentGameState.getNumFood()
+  capsules = currentGameState.getCapsules()
+  score = currentGameState.getScore()
+
+  closestDistanceToGhost = 1000
+  PacManWillDie = False
+  ghostDistanceList = []
+  for x,y in ghostPositions:
+    distance = util.manhattanDistance(position, (x,y))
+    ghostDistanceList.append(((x,y), distance))
+    if position == (x,y): PacManWillDie = True
+    if distance < closestDistanceToGhost:
+      closestDistanceToGhost = distance
+
+  # get the closest distance to scared ghosts and non-scared ghosts
+  closestDistanceToGhost = 1000
+  closestDistanceToScaredGhost = 1000
+  for ghostState in ghostStates:
+    ghostPos = ghostState.getPosition()
+    distance = util.manhattanDistance(position, ghostPos)
+    # if scared
+    if ghostState.scaredTimer:
+      if distance < closestDistanceToScaredGhost:
+        closestDistanceToScaredGhost = distance
+    else:
+      if distance < closestDistanceToGhost:
+        closestDistanceToGhost = distance
+
+
+  # print 'closest distance to a ghost is: ', closestDistanceToGhost
+
+  closestDistanceToFood = 1000
+  for foodPos in food:
+    distance = util.manhattanDistance(position, foodPos)
+    if distance < closestDistanceToFood:
+      closestDistanceToFood = distance
+
+  NumCloseGhosts = 0
+  for ghostPos, dist in ghostDistanceList:
+    if dist < 2:
+      NumCloseGhosts += 1
+
+  if currentGameState.isWin():
+    return 99999
+  if currentGameState.isLose():
+    return -999999
+
+  if PacManWillDie:
+    return -99999
+  else:
+    return score + 2*closestDistanceToGhost+ (1/0.01+4*foodNum) + \
+    (1/(0.01+closestDistanceToFood*1.5)) + 1/(0.01+closestDistanceToScaredGhost*2) + \
+    1/(0.01 + 3*NumCloseGhosts)
+  
 
 # Abbreviation
 better = betterEvaluationFunction
